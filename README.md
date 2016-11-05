@@ -25,7 +25,9 @@ fn main() {
   let manifest = Manifest::new(...);
 
   // The place to install add-ons.
-  let install_location = InstallLocation::new(...);
+  let install_name = InstallLocationName::Profile;
+  let base_directory = String::from("c:\\Extensions");
+  let install_location = InstallLocation::new(install_name, base_directory); 
 
   // Represents the addon itself.
   let addon = Addon::new(manifest, install_location);
@@ -43,12 +45,21 @@ Running
 -------
 
 ```bash
-$ cargo run
+cargo run
+```
+
+NOTE - if you get an error about the OpenSSL header file being missing on
+Mac OS X with Homebrew, try:
+
+```bash
+export OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)/include
+export OPENSSL_LIB_DIR=$(brew --prefix openssl)/lib
+cargo run
 ```
 
 Testing
 -------
 
 ```bash
-$ cargo test
+cargo test
 ````

@@ -6,3 +6,4 @@ authors = ["Robert Helmer <rhelmer@rhelmer.org>"]
 [dependencies]
 url = "1.2.3"
 semver = "0.5.1"
+hyper = "0.9.11"
