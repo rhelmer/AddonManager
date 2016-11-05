@@ -53,25 +53,6 @@ impl Manifest {
             url: url,
         }
     }
-/*
-        // TODO verify ID
-        self.id = id;
-
-        // TODO verify name
-        self.name = name;
-
-        self.addon_type = match addon_type {
-            addon_type::NativeExtension => {},
-            addon_type::WebExtension => {},
-            addon_type::Theme => {},
-            addon_type::Plugin => {},
-            addon_type::Service => {},
-            _ => panic!("Invalid addon type"),
-        };
-
-        // TODO validate URL
-        self.url = url;
-*/
 }
 
 /// An Addon represents an individual addon.
