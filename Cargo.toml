@@ -1,7 +1,6 @@
 [package]
-name = "rust"
+name = "AddonManager"
 version = "0.1.0"
 authors = ["Robert Helmer <rhelmer@rhelmer.org>"]
 
 [dependencies]
-webplatform = "0.4.2"
