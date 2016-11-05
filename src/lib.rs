@@ -1,7 +1,9 @@
 extern crate url;
+extern crate semver;
 
 pub mod addon_manager {
     use url::Url;
+    use semver::Version;
 
     pub enum AddonType {
         NativeExtension,
@@ -43,13 +45,13 @@ pub mod addon_manager {
     pub struct Manifest {
         pub id: String,
         pub name: String,
-        pub version: String,
+        pub version: Version,
         pub addon_type: AddonType,
         pub url: Url,
     }
 
     impl Manifest {
-        pub fn new(id: String, name: String, version: String, addon_type: AddonType,
+        pub fn new(id: String, name: String, version: Version, addon_type: AddonType,
                    url: Url) -> Self {
             Manifest {
                 id: id,
@@ -68,7 +70,7 @@ pub mod addon_manager {
 
     impl InstallLocation {
         pub fn new(name: String, base_directory: String) -> Self {
-            println!("Initialized install location {} in {}", name, base_directory);
+            //println!("Initialized install location {} in {}", name, base_directory);
             InstallLocation {
                 name: name,
                 base_directory: base_directory,
@@ -96,7 +98,7 @@ pub mod addon_manager {
     pub struct Addon {
         pub id: String,
         pub name: String,
-        pub version: String,
+        pub version: Version,
         pub install_url: Url,
         pub install_location: InstallLocation,
         pub source_uri: String,
@@ -177,6 +179,7 @@ pub mod addon_manager {
               InstallState::Staging => InstallState::Staged,
               _ => panic!("Invalid state transition"),
           };
+          self.install();
       }
 
       pub fn install(&mut self) {
@@ -248,24 +251,28 @@ pub mod addon_manager {
 
     #[cfg(test)]
     mod tests {
+        use url::Url;
+        use semver::Version;
+
         use super::Manifest;
         use super::Addon;
         use super::AddonType;
         use super::InstallLocation;
         use super::Install;
-        use url::Url;
 
         #[test]
         fn install_addon() {
             let id = String::from("@test123");
             let name = String::from("Test Addon");
-            let version = String::from("0.1");
+            let version = Version::parse("0.0.1").unwrap();
             let addon_type = AddonType::WebExtension;
-            let url = Url::parse("data:text/plain,Hello?World#").unwrap();
+            let url = Url::parse("http://example.com").unwrap();
             let manifest = Manifest::new(id, name, version, addon_type, url);
 
             let name = String::from("profile");
-            let base_directory = String::from("c:\\Addons");
+            // TODO use std::fs::DirEntry instead
+            // TODO need to figure out how to mock it...
+            let base_directory = String::from("c:\\Extensions");
             let install_location = InstallLocation::new(name, base_directory);
 
             let addon = Addon::new(manifest, install_location);
