@@ -48,7 +48,7 @@ pub mod addon_manager {
         UninstallFailed,
     }
 
-    ///s Possible names for InstallLocations.
+    /// Possible names for InstallLocations.
     pub enum InstallLocationName {
         Profile,
         Application,
