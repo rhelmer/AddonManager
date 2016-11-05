@@ -283,6 +283,7 @@ pub mod addon_manager {
             install.download();
 
             // TODO check that addon is actually installed now.
+            println!("Install state: {}", install.state);
         }
     }
 }
