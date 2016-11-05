@@ -2,9 +2,11 @@ extern crate hyper;
 extern crate semver;
 
 pub mod addon_manager {
+    use std::fs;
     use std::fs::File;
     use std::io::Read;
     use std::io::Write;
+    use std::path::PathBuf;
 
     use hyper::client::Client;
     use hyper::Url;
@@ -31,8 +33,8 @@ pub mod addon_manager {
         Postponing,
         Postponed,
         PostponedFailed,
-        Resumed,
         Resuming,
+        Resumed,
         ResumeFailed,
         Staging,
         Staged,
@@ -82,6 +84,8 @@ pub mod addon_manager {
     pub struct InstallLocation {
         pub name: InstallLocationName,
         pub base_directory: String, // FIXME use real file type
+        download_directory: String, // FIXME use real file type
+        staging_directory: String, // FIXME use real file type
     }
 
     impl InstallLocation {
@@ -89,23 +93,25 @@ pub mod addon_manager {
             InstallLocation {
                 name: name,
                 base_directory: base_directory,
+                download_directory: String::from("download"),
+                staging_directory: String::from("staging"),
             }
         }
 
         pub fn get_download_directory(&mut self) -> String {
+            // FIXME make `InstallLocationName`s printable
             //println!("Creating download directory for install location {}", self.name);
-            //self.downloadDirectory = self.base_directory.append("download");
             // TODO wrap in a lock and release it when references drop.
-            //      also remove directory when all references have dropped.
-            return String::from("downloaddir");
+            //      also remove directory when all references have drop
+            return self.base_directory.clone() + "/" + self.download_directory.as_str();
         }
 
         pub fn get_staging_directory(&mut self) -> String {
+            // FIXME make `InstallLocationName`s printable
             //println!("Creating staging directory for install location {}", self.name);
-            //self.stageDirectory = self.base_directory.append("staging");
             // TODO wrap in a lock and release it when references drop.
             //      also remove directory when all references have dropped.
-            return String::from("stagedir");
+            return self.base_directory.clone() + "/" + self.staging_directory.as_str();
         }
     }
 
@@ -116,7 +122,7 @@ pub mod addon_manager {
         pub version: Version,
         pub install_url: Url,
         pub install_location: InstallLocation,
-        pub source_uri: String,
+        pub source_uri: PathBuf,
     }
 
     impl Addon {
@@ -127,7 +133,7 @@ pub mod addon_manager {
                 version: manifest.version,
                 install_url: manifest.url,
                 install_location: install_location,
-                source_uri: String::from(""),
+                source_uri: PathBuf::new(),
             }
         }
     }
@@ -152,14 +158,12 @@ pub mod addon_manager {
               _ => panic!("Invalid state transition"),
           };
           println!("Downloading {}...", self.addon.name);
-          self.addon.source_uri = self.addon.install_location.get_download_directory();
 
           let client = Client::new();
           let url = self.addon.install_url.clone();
           let mut response = match client.get(url).send() {
               Ok(response) => response,
               Err(err) => {
-                  println!("Error downloading file: {}", err);
                   self.state = InstallState::DownloadFailed;
                   return;
               },
@@ -168,31 +172,34 @@ pub mod addon_manager {
           let mut buf = String::new();
           match response.read_to_string(&mut buf) {
               Ok(_) => (),
-              Err(_) => {
-                  self.state = InstallState::DownloadFailed;
-                  return;
-              },
+              Err(_) => self.state = InstallState::DownloadFailed,
           };
 
-          let filename = self.addon.id.clone() + ".xpi";
+          let download_directory = self.addon.install_location.get_download_directory();
+          let mut path = PathBuf::from(download_directory);
 
-          // FIXME use download dir
-          let mut f = match File::create(filename) {
-              Ok(f) => (f),
-              Err(err) => {
-                  println!("Error creating download file: {}", err);
-                  self.state = InstallState::DownloadFailed;
-                  return;
-              },
-          };
-
-          match f.write_all(buf.as_bytes()) {
+          println!("About to create download dir {:?}", path);
+          match fs::create_dir_all(&path) {
               Ok(_) => (),
               Err(err) => {
-                  println!("Error writing to download file: {}", err);
                   self.state = InstallState::DownloadFailed;
-                  return;
               },
+          }
+
+          let filename = self.addon.id.clone() + ".xpi";
+          path.push(filename);
+
+          let mut file = match File::create(&path) {
+              Ok(f) => (f),
+              Err(err) => {
+                self.state = InstallState::DownloadFailed;
+                return;
+              }
+          };
+
+          match file.write_all(buf.as_bytes()) {
+              Ok(_) => (),
+              Err(err) => self.state = InstallState::DownloadFailed,
           };
 
           println!("Finished downloading {}", self.addon.name);
@@ -200,6 +207,9 @@ pub mod addon_manager {
               InstallState::Downloading => InstallState::Downloaded,
               _ => panic!("Invalid state transition"),
           };
+
+          self.addon.source_uri = path;
+
           self.verify();
       }
 
@@ -210,13 +220,15 @@ pub mod addon_manager {
           };
           println!("Verifying {}...", self.addon.name);
 
-          // TODO Actually verify from `self.addon.source_uri`.
-          // TODO Set to VerifyFailed if failed.
+          // TODO actually verify
+          println!("File: {:?}", self.addon.source_uri);
+
           println!("Finished verifying {}", self.addon.name);
           self.state = match self.state {
               InstallState::Verifying => InstallState::Verified,
               _ => panic!("Invalid state transition"),
           };
+
           self.stage();
       }
 
@@ -226,8 +238,26 @@ pub mod addon_manager {
               _ => panic!("Invalid state transition"),
           };
           println!("Staging {}...", self.addon.name);
-          // TODO Actually copy from `downloadDirectory` to `stageDirectory`.
-          self.addon.source_uri = self.addon.install_location.get_staging_directory();
+          let file = self.addon.source_uri.clone();
+          let staging_directory = self.addon.install_location.get_staging_directory();
+
+          let mut path = PathBuf::from(staging_directory);
+
+          println!("About to create staging dir {:?}", path);
+          match fs::create_dir_all(&path) {
+              Ok(_) => (),
+              Err(err) => {
+                  self.state = InstallState::StagingFailed;
+                  return;
+              },
+          }
+
+          let filename = self.addon.id.clone() + ".xpi";
+          path.push(filename);
+
+          println!("About to copy {:?} to {:?}", file, path.to_str());
+          fs::copy(file, path).unwrap();
+
           // TODO Set to StagingFailed if failed.
           println!("Finished staging {}", self.addon.name);
           self.state = match self.state {
@@ -330,7 +360,7 @@ pub mod addon_manager {
             let name = InstallLocationName::Profile;
             // TODO use std::fs::DirEntry instead
             // TODO need to figure out how to mock it...
-            let base_directory = String::from("c:\\Extensions");
+            let base_directory = String::from("./test/tmp");
             let install_location = InstallLocation::new(name, base_directory);
 
             let addon = Addon::new(manifest, install_location);
