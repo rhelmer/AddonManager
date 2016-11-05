@@ -254,11 +254,12 @@ pub mod addon_manager {
         use url::Url;
         use semver::Version;
 
-        use super::Manifest;
         use super::Addon;
         use super::AddonType;
         use super::InstallLocation;
         use super::Install;
+        use super::InstallState;
+        use super::Manifest;
 
         #[test]
         fn install_addon() {
@@ -282,8 +283,10 @@ pub mod addon_manager {
             // Start the install process from scratch.
             install.download();
 
-            // TODO check that addon is actually installed now.
-            println!("Install state: {}", install.state);
+            match install.state {
+                InstallState::Installed => {},
+                _ => panic!("Unexpected install state"),
+            }
         }
     }
 }
