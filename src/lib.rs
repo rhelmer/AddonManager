@@ -10,6 +10,7 @@ pub mod addon_manager {
     use hyper::Url;
     use semver::Version;
 
+    /// Possible types of add-ons.
     pub enum AddonType {
         NativeExtension,
         WebExtension,
@@ -18,6 +19,7 @@ pub mod addon_manager {
         Service,
     }
 
+    /// Possible install states.
     pub enum InstallState  {
         Available,
         Downloading,
@@ -46,13 +48,14 @@ pub mod addon_manager {
         UninstallFailed,
     }
 
+    ///s Possible names for InstallLocations.
     pub enum InstallLocationName {
         Profile,
         Application,
         System,
     }
 
-    /// An Manifest describes an Addon.
+    /// A Manifest describes an available Add-on.
     pub struct Manifest {
         pub id: String,
         pub name: String,
@@ -74,6 +77,8 @@ pub mod addon_manager {
         }
     }
 
+    /// An InstallLocation points to the area on the filesystem to store installed add-ons,
+    /// and controls access to staging and download areas.
     pub struct InstallLocation {
         pub name: InstallLocationName,
         pub base_directory: String, // FIXME use real file type
