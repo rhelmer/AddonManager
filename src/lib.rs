@@ -1,4 +1,7 @@
+extern crate url;
+
 pub mod addon_manager {
+    use url::Url;
 
     pub enum AddonType {
         NativeExtension,
@@ -42,12 +45,12 @@ pub mod addon_manager {
         pub name: String,
         pub version: String,
         pub addon_type: AddonType,
-        pub url: String,
+        pub url: Url,
     }
 
     impl Manifest {
         pub fn new(id: String, name: String, version: String, addon_type: AddonType,
-                   url: String) -> Self {
+                   url: Url) -> Self {
             Manifest {
                 id: id,
                 name: name,
@@ -94,7 +97,7 @@ pub mod addon_manager {
         pub id: String,
         pub name: String,
         pub version: String,
-        pub install_url: String,
+        pub install_url: Url,
         pub install_location: InstallLocation,
         pub source_uri: String,
     }
@@ -250,6 +253,7 @@ pub mod addon_manager {
         use super::AddonType;
         use super::InstallLocation;
         use super::Install;
+        use url::Url;
 
         #[test]
         fn install_addon() {
@@ -257,7 +261,7 @@ pub mod addon_manager {
             let name = String::from("Test Addon");
             let version = String::from("0.1");
             let addon_type = AddonType::WebExtension;
-            let url = String::from("http://.../");
+            let url = Url::parse("data:text/plain,Hello?World#").unwrap();
             let manifest = Manifest::new(id, name, version, addon_type, url);
 
             let name = String::from("profile");
