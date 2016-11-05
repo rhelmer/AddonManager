@@ -40,8 +40,8 @@ pub mod addon_manager {
         Installing,
         Installed,
         InstallFailed,
-        Cancelling,
-        Cancelled,
+        Canceling,
+        Canceled,
         CancelFailed,
         Uninstalling,
         Uninstalled,
@@ -120,7 +120,6 @@ pub mod addon_manager {
     }
 
     impl Addon {
-        //fn new(manifest: Vec<u8>, type, install_location: install_location) -> Addon {
         pub fn new(manifest: Manifest, install_location: InstallLocation) -> Self {
             Addon {
                 id: manifest.id,
@@ -255,30 +254,30 @@ pub mod addon_manager {
               InstallState::Downloading | InstallState::Downloaded => {
                   println!("Stopping download...");
                   println!("Remove downloaded files...");
-                  InstallState::Cancelled
+                  InstallState::Canceled
               },
               InstallState::Verifying | InstallState::Verified => {
                   println!("Stopping verification...");
-                  InstallState::Cancelled
+                  InstallState::Canceled
               },
               InstallState::Postponing | InstallState::Postponed => {
                   println!("Removing postponed install...");
-                  InstallState::Cancelled
+                  InstallState::Canceled
               },
               InstallState::Resuming | InstallState::Resumed => {
                   println!("Stop resuming install...");
                   println!("Uninstall resumed install...");
-                  InstallState::Cancelled
+                  InstallState::Canceled
               },
               InstallState::Staging | InstallState::Staged => {
                   println!("Stopping staging...");
                   println!("Remove staged files...");
-                  InstallState::Cancelled
+                  InstallState::Canceled
               },
               InstallState::Installing | InstallState::Installed => {
                   println!("Stopping install...");
                   println!("Uninstalling installed addon...");
-                  InstallState::Cancelled
+                  InstallState::Canceled
               },
               _ => panic!("Invalid state transition"),
           };
