@@ -1,5 +1,5 @@
 [package]
-name = "AddonManager"
+name = "addon_manager"
 version = "0.1.0"
 authors = ["Robert Helmer <rhelmer@rhelmer.org>"]
 

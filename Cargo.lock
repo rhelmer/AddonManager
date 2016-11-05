@@ -1,4 +1,4 @@
 [root]
-name = "AddonManager"
+name = "addon_manager"
 version = "0.1.0"
 
